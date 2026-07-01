@@ -9,7 +9,7 @@ support for modern versions of QuantumEspresso and other codes. In order ot read
 ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/Si50Ge50.png)  |  ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/Si50Ge50_.png) |  ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/SiGeOverlayBandStructure.png) 
 :-------------------------:|:-------------------------:|:-------------------------:
 Unfolded band structure - flatband mode (Si0.5Ge0.5) |  Unfolded band structure - density mode (Si0.5Ge0.5) | Band structures overlay (Si0.5Ge0.5: Red, pure Si: black, pure Ge: blue) 
-![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/band_center_width.png)  |  ![](imgs/effective_mass_plot_0.png) |  ![](imgs/effective_mass_plot_1.png) 
+![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/band_center_width.png)  |  ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/effective_mass_plot_0.png) |  ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/effective_mass_plot_1.png) 
 Band centers and band width (Si0.5Ge0.5) |  Band centers (Al0.84Ga0.16N) | Fitting good band centers (Al0.84Ga0.16N5)
 <!-- =========================================================== -->
 
@@ -134,7 +134,7 @@ If you use `BandUPpy` in your work, please:
 
   * **How to cite the package:** (use appropriate version number and doi corresponding to your installed banduppy)
 
-        <author_list>, "band-unfolding/banduppy: version-0.3.5 (v0.3.5))". Zenodo, 2026. doi:(10.5281/zenodo.XXXXX)[https://doi.org/10.5281/zenodo.XXXXX]
+>> <author_list>, "band-unfolding/banduppy: version-0.3.5 (v0.3.5))". Zenodo, 2026. [doi:10.5281/zenodo.XXXXX](https://doi.org/10.5281/zenodo.XXXXX)
 
   * **Read and cite the following papers** (and the appropriate references therein):
     
