@@ -1,36 +1,23 @@
-# `BandUP/BandUPpy`: Band Unfolding code for Plane-wave based first-principles calculations             
+# `BandUPpy`: Python Package for Band Unfolding of Plane-wave Based First-Principles Calculations             
 
 __Note:__ This is a Python version to the [BandUP](https://github.com/band-unfolding/bandup) code (not to be confused with bandupy - the interface and plotting tool of BandUP), made in order to restore
-support for modern versions of QuantumEspresso and other codes. In order ot read the wavefunctions
-stored by ab-initio codes, the routines of [irrep](https://github.com/stepan-tsirkin/irrep) are used. 
+support for modern versions of QuantumEspresso and other codes. In order ot read the wavefunctions stored by ab-initio codes, the routines of [irrep](https://github.com/stepan-tsirkin/irrep) are used. 
 
 <!-- =========================================================== -->
 
 <!-- =========================================================== -->
-![](imgs/Si50Ge50.png)  |  ![](imgs/Si50Ge50_.png) |  ![](imgs/SiGeOverlayBandStructure.png) |  ![](imgs/band_center_width.png)
-:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-Unfolded band structure - flatband mode (Si0.5Ge0.5) |  Unfolded band structure - density mode (Si0.5Ge0.5) | Band structures overlay (Si0.5Ge0.5: Red, pure Si: black, pure Ge: blue) | Band centers and band width (Si0.5Ge0.5)
+![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/Si50Ge50.png)  |  ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/Si50Ge50_.png) |  ![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/SiGeOverlayBandStructure.png) 
+:-------------------------:|:-------------------------:|:-------------------------:
+Unfolded band structure - flatband mode (Si0.5Ge0.5) |  Unfolded band structure - density mode (Si0.5Ge0.5) | Band structures overlay (Si0.5Ge0.5: Red, pure Si: black, pure Ge: blue) 
+![](https://raw.githubusercontent.com/band-unfolding/banduppy/refs/heads/master/imgs/band_center_width.png)  |  ![](imgs/effective_mass_plot_0.png) |  ![](imgs/effective_mass_plot_1.png) 
+Band centers and band width (Si0.5Ge0.5) |  Band centers (Al0.84Ga0.16N) | Fitting good band centers (Al0.84Ga0.16N5)
 <!-- =========================================================== -->
 
 <!-- =========================================================== -->
 ## Developers and contributors
 <!-- =========================================================== -->
 
-__Developer of BandUPpy :__ 
-
-* [Stepan S. Tsirkin](https://github.com/stepan-tsirkin)
-
-__BandUPpy Package is Restructured by (maintainer):__
-
-* [Badal Mondal](https://github.com/bmondal94) 
-
-__Developer of original BandUP :__ 
-
-  *  Paulo V. C. Medeiros, Linköping University, (at present: SMHI, the Swedish Meteorological and Hydrological Institute)
-
-  *  Jonas Björk, Linköping University
-  
-  *  [Stepan S. Tsirkin](https://github.com/stepan-tsirkin), (in 2015: Donostia International Physics Center)
+__BandUPpy Package Developer/Maintainer:__ [Stepan S. Tsirkin](https://github.com/stepan-tsirkin), [Badal Mondal](https://github.com/bmondal94) 
 
 __BandUPpy Contributors:__  [Contributors](https://github.com/band-unfolding/banduppy/graphs/contributors)
 
@@ -39,6 +26,8 @@ __BandUPpy Contributors:__  [Contributors](https://github.com/band-unfolding/ban
 __Contact us:__ [Email developer/maintainer team](mailto:stepan.tsirkin@ehu.eus,badalmondal.chembgc@gmail.com) 
 
 * If you would like to contribute to the development of `BandUPpy` or request new functionality, please get in touch with [us](mailto:stepan.tsirkin@ehu.eus,badalmondal.chembgc@gmail.com) or open a pull request. We appreciate and respect our users' views and are committed to providing the best experience possible. Your feedback is highly valued. We will be happy to support your request ASAP. 
+
+__Special mention:__ `BandUPpy` originated from the ideas and implementation developed in the original [BandUP](https://github.com/band-unfolding/bandup) code. `BandUP` was originally developed by _Paulo V. C. Medeiros_ (then at Linköping University, presently at the Swedish Meteorological and Hydrological Institute), _Jonas Björk_ (Linköping University), and [Stepan S. Tsirkin](https://github.com/stepan-tsirkin).
 
 <!-- =========================================================== -->
 
@@ -52,7 +41,7 @@ __Contact us:__ [Email developer/maintainer team](mailto:stepan.tsirkin@ehu.eus,
     3. numpy
     4. pickle
     5. scipy>=1.0
-    6. irrep>=1.9.3
+    6. irrep>=2.6.3
     7. matplotlib
 ```
 
@@ -74,14 +63,6 @@ Or, without cloning
     pip install git+https://github.com/band-unfolding/banduppy.git #@specific_branch
 ```
 
-### 4. Installation using `setup.py` [deprecated]
-Alternatively you can clone the repository and run `setup.py` in the usual manner:
-
-```
-    git clone https://github.com/band-unfolding/banduppy.git
-    cd banduppy
-    python setup.py install
-```
 <!-- =========================================================== -->
 
 <!-- =========================================================== -->
@@ -116,7 +97,9 @@ banduppy package:
         3.1 collect_bandstr_data_only_in_energy_window()
         3.2 band_centers_broadening_bandstr()
         3.3 calculate_effecfive_mass()
-        3.4 fit_functions()
+        3.4 effective_mass_fit_functions()
+        3.5 calculate_alloy_scattering_potential()
+        3.6 alloy_scattering_lifetime_function()
     4. SaveBandStructuredata class
         4.1 save_unfolded_pc_kpts()
         4.2 save_unfolded_bandstucture()
@@ -125,6 +108,10 @@ banduppy package:
         5.1 plot_ebs()
         5.2 plot_scf()
         5.3 save_plot_figure()
+    6. HighLevelProperties class
+        3.1 scf_refine_effecfive_mass_calculator()
+        3.2 calculate_effective_masses()
+        3.3 merge_zero_weight_2_sc_kpoint_file()
 ```
 
 <!-- =========================================================== -->
@@ -141,9 +128,13 @@ You can find a list of common user issues encountered while using this software 
 
 If you use `BandUPpy` in your work, please:
 
-  * **State EXPLICITLY that you have used the BandUP code** (or a modified version of it, if this is the case), for instance, adding a sentence like: 
+  * **State EXPLICITLY that you have used the BandUPpy code** (or a modified version of it, if this is the case), for instance, adding a sentence like: 
 
-         "The unfolding is performed using the BandUP(py) code"
+         "The unfolding has been performed using the BandUPpy code"
+
+  * **How to cite the package:** (use appropriate version number and doi corresponding to your installed banduppy)
+
+        <author_list>, "band-unfolding/banduppy: version-0.3.5 (v0.3.5))". Zenodo, 2026. doi:(10.5281/zenodo.XXXXX)[https://doi.org/10.5281/zenodo.XXXXX]
 
   * **Read and cite the following papers** (and the appropriate references therein):
     
@@ -154,18 +145,26 @@ If you use `BandUPpy` in your work, please:
 >> 3. Mikel Iraola, Juan L. Mañes, Barry Bradlyn, Titus Neupert, Maia G. Vergniory, Stepan S. Tsirkin,
    "IrRep: Symmetry eigenvalues and irreducible representations of ab initio band structures", [Comput. Phys. Commun. **272**, 108226 (2022)](https://doi.org/10.1016/j.cpc.2021.108226)
 
-__Bibliography file:__ Here is the [bibliography file](docs/REFERENCES.md) for your convenience.
+If you use the `band center determination` or `effective mass` modules/functions from `BandUPpy` in your work, please:
 
-## Further details
-##### <http://www.ifm.liu.se/theomod/compphys/band-unfolding>
-##### <https://github.com/band-unfolding/bandup>
+  * **Additionally read and cite the following papers** (and the appropriate references therein):
+    
+>> 4. TBA 
+
+If you use the `alloy scattering` modules/functions from `BandUPpy` in your work, please:
+
+  * **Additionally read and cite the following papers** (and the appropriate references therein):
+
+>> 5. TBA    
+>> 6. Nick Pant, Zihao Deng, and Emmanouil Kioupakis,
+   [Appl. Phy. Lett. **117**, 242105 (2020)](http://doi.org/10.1063/5.0027802)  
+
+__Bibliography file:__ Here is the [bibliography file](docs/REFERENCES.md) for your convenience.
 
 <!-- =========================================================== -->
 
 <!-- =========================================================== -->
 ## Version release
-__Latest release: v0.3.4__
-
 Chekout out [version release history here](docs/RELEASE.md) for the full list of updates and upgrades.
 
 <!-- =========================================================== -->
@@ -181,15 +180,12 @@ the Free Software Foundation, either version 3 of the License, or
 `BandUPpy` is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with BandUP.  If not, see <http://www.gnu.org/licenses/>.
+GNU General Public License for more details: [GNU General Public License v3.0](https://github.com/band-unfolding/banduppy/blob/master/LICENSE)
 <!-- =========================================================== -->
 
 <!-- =========================================================== -->
 ## Upcoming (TBD)
 1. Orbital contribution projection implementation
-2. Improve band center determination algorithm
+2. Add band unfolding for zero-weight k-points method - mbj, hybrid functional
 <!-- =========================================================== -->
 

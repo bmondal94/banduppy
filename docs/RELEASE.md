@@ -1,4 +1,15 @@
-__Latest release: v0.3.4__
+__Latest release: v0.3.5__
+
+__v0.3.5__
+
+* Moved setup.py to project.toml
+* Added testsuit
+* Merging save_all_kpts and save_sc_kpts to single keyword save_kpts.
+* Improved band center determination algorithm
+* Added alloy disorder scattering potential calculator
+* Documentation updated for return arguments from effective_mass_calculator function
+* Added high-level properties calculator
+* Added color and marker arguments option for supercell bands in plot_ebs()
 
 __v0.3.4__
 

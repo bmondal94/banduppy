@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from .src import _BandFolding, _BandUnfolding, _GeneralFnsDefs
-from .Utilities import _GeneralFunctionsDefs, _EBSplot, _FoldingDegreePlot, _BandCentersBroadening, _EffectiveMass
+from .Utilities import _GeneralFunctionsDefs, _EBSplot, _FoldingDegreePlot
+from .Utilities import _BandCentersBroadening, _EffectiveMass, _alloy_scattering_params
 
 ### ===========================================================================    
 class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
@@ -92,8 +93,7 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
         return proposed_folding_results
         
     def generate_SC_Kpts_from_pc_k_path(self, pathPBZ=None, nk=11, labels=None, kpts_weights=None, 
-                                        save_all_kpts:bool=False, save_sc_kpts:bool=False, 
-                                        save_dir='.', file_name:str='', 
+                                        save_kpts:bool=False, save_dir='.', file_name:str='', 
                                         file_name_suffix:str='', file_format:str='vasp'):
         """
         Generate supercell kpoints from reference primitive BZ k-path.
@@ -122,11 +122,9 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
         kpts_weights : int or float or 1d numpy array, optional
             Weights of the SC kpoints. The default is None. If none, no weights are padded
             in the generated SC K-points list.
-        save_all_kpts : bool, optional
-            Save the PC kpoints, generated SC kpoints, and SC-PC kpoints mapping. 
-            The default is False. If True, has precedence over save_sc_kpts.
-        save_sc_kpts : bool, optional
-            Save the generated SC kpoints. The default is False.
+        save_kpts : bool, optional
+            Save the PC kpoints, SC kpoints, SC-PC kpoints mapping, and 
+            Special kpoints. The default is False. 
         save_dir : str/path_object, optional
             Directory to save the file. The default is current directory.
         file_name : str, optional
@@ -151,16 +149,14 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
 
         """
         return self._generate_SC_K_from_pc_k_path(pathPBZ=pathPBZ, nk=nk, labels=labels, 
-                                                  kpts_weights=kpts_weights, 
-                                                  save_all_kpts=save_all_kpts, 
-                                                  save_sc_kpts=save_sc_kpts, 
+                                                  kpts_weights=kpts_weights,  
+                                                  save_kpts=save_kpts, 
                                                   save_dir=save_dir, file_name=file_name, 
                                                   file_name_suffix=file_name_suffix, 
                                                   file_format=file_format)
             
     def generate_SC_Kpts_from_pc_kpts(self, kpointsPBZ=None, kpts_weights=None,
-                                      save_all_kpts:bool=False, save_sc_kpts:bool=False, 
-                                      save_dir='.', file_name:str='', 
+                                      save_kpts:bool=False, save_dir='.', file_name:str='', 
                                       file_name_suffix:str='', file_format:str='vasp', footer_msg=None,
                                       special_kpoints_pos_labels=None):
         """
@@ -173,11 +169,9 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
         kpts_weights : int or float or 1d numpy array, optional
             Weights of the SC kpoints. The default is None. If none, no weights are padded
             in the generated SC K-points list.
-        save_all_kpts : bool, optional
-            Save the PC kpoints, generated SC kpoints, and SC-PC kpoints mapping. 
-            The default is False. If True, has precedence over save_sc_kpts.
-        save_sc_kpts : bool, optional
-            Save the generated SC kpoints. The default is False.
+        save_kpts : bool, optional
+            Save the PC kpoints, SC kpoints, SC-PC kpoints mapping, and 
+            Special kpoints. The default is False.
         save_dir : str/path_object, optional
             Directory to save the file. The default is current directory.
         file_name : str, optional
@@ -211,10 +205,8 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
 
         """
         return self._generate_K_from_k(kpointsPBZ=kpointsPBZ, kpts_weights=kpts_weights,
-                                       save_all_kpts=save_all_kpts, 
-                                       save_sc_kpts=save_sc_kpts, 
-                                       save_dir=save_dir, file_name=file_name, 
-                                       file_name_suffix=file_name_suffix, 
+                                       save_kpts=save_kpts, save_dir=save_dir, 
+                                       file_name=file_name, file_name_suffix=file_name_suffix, 
                                        file_format=file_format, footer_msg=footer_msg,
                                        special_kpoints_pos_labels=special_kpoints_pos_labels)
     
@@ -281,7 +273,7 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
 
         """
         if (PBZ_kpts_list_full is None) or \
-            (SBZ_kpts_list in None) or (SBZ_PBZ_kpts_map is None):
+            (SBZ_kpts_list is None) or (SBZ_PBZ_kpts_map is None):
             _BandUnfolding.__init__(self, self.transformation_matrix, 
                                     self.PBZ_kpts_list_org, self.SBZ_kpts_list, 
                                     self.SBZ_PBZ_kpts_mapping,
@@ -300,8 +292,8 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
     def plot_ebs(self, fig=None, ax=None, save_figure_dir='.', save_file_name=None,  
                  CountFig=None, Ef=None, Emin=None, Emax=None, pad_energy_scale:float=0.5, 
                  threshold_weight:float=None, mode:str="fatband", yaxis_label:str='E (eV)', 
-                 special_kpoints:dict=None, plotSC:bool=True, marker='o', fatfactor=20, 
-                 nE:int=100, smear:float=0.05, color='gray', color_map='viridis', 
+                 special_kpoints:dict=None, plotSC:bool=True, marker='o', sc_marker='o', fatfactor=20, 
+                 nE:int=100, smear:float=0.05, color='gray', sc_color='gray', color_map='viridis', 
                  show_legend:bool=True, show_colorbar:bool=False, colorbar_label:str=None, 
                  vmin=None, vmax=None, show_plot:bool=True, savefig:bool=True, **kwargs_savefig):
         
@@ -347,6 +339,10 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
             The marker style for fatband plot. Marker can be either an instance of
             the class or the text shorthand for a particular marker.
             The default is 'o'.
+        sc_marker : matplotlib.pyplot markerMarkerStyle, optional
+            The marker style for supercell plots. Marker can be either an 
+            instance of the class or the text shorthand for a particular marker. 
+            The default is 'o'.        
         fatfactor : int, optional
             Scatter plot marker size. The default is 20.
         nE : int, optional
@@ -355,8 +351,9 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
         smear : float, optional
             Gaussian smearing. The default is 0.05.
         color : str/color, optional
-            Color of scatter plot of unfolded band structure. The color of supercell
-            band structures is gray. The default is 'gray'.
+            Color of scatter plot of unfolded band structure. The default is 'gray'.
+        sc_color : str/color, optional
+            Color of plot of folded supercell band structure.The default is 'gray'.
         color_map: str/ matplotlib colormap
             Colormap for density plot. The default is viridis.
         show_legend : bool
@@ -394,13 +391,14 @@ class Unfolding(_BandFolding, _BandUnfolding, _EBSplot, _FoldingDegreePlot):
         return self._plot(fig=fig, ax=ax, save_file_name=save_file_name, CountFig=CountFig,  
                           Ef=Ef, Emin=Emin, Emax=Emax, pad_energy_scale=pad_energy_scale, 
                           threshold_weight=threshold_weight, mode=mode, yaxis_label=yaxis_label, 
-                          special_kpoints=special_kpoints, plotSC=plotSC, marker=marker, 
-                          fatfactor=fatfactor, nE=nE, smear=smear, color=color, color_map=color_map,
+                          special_kpoints=special_kpoints, plotSC=plotSC, marker=marker,
+                          sc_marker=sc_marker, fatfactor=fatfactor, nE=nE, smear=smear, 
+                          color=color, sc_color=sc_color, color_map=color_map,
                           show_legend=show_legend, show_colorbar=show_colorbar,
                           colorbar_label=colorbar_label, vmin=vmin, vmax=vmax, 
                           show_plot=show_plot, savefig=savefig, **kwargs_savefig)
     
-class Properties(_BandCentersBroadening, _EffectiveMass):
+class Properties(_BandCentersBroadening, _EffectiveMass, _alloy_scattering_params):
     """
     Calculate properties from unfolded band structure.
 
@@ -418,6 +416,7 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
         """       
         if print_log is not None: print_log = print_log.lower()
         self.print_log_info = print_log
+        self.space_gap = 55 # add white space for text line formatting
 
     def collect_bandstr_data_only_in_energy_window(self, unfolded_bandstructure, Ef:float=None,
                                                    Emin:float=None, Emax:float=None,
@@ -495,10 +494,12 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
         return Emin, Emax, unfolded_bandstructure_window_
     
     def band_centers_broadening_bandstr(self, unfolded_bandstructure, 
-                                        min_dN_pre_screening:float=1e-4,
-                                        threshold_dN_2b_trial_band_center:float=0.05,
-                                        min_sum_dNs_for_a_band:float=0.05, 
-                                        precision_pos_band_centers:float=1e-5,
+                                        algorithm_version:str='Mondal2025',
+                                        sigma:float=1,
+                                        min_sum_dNs_for_a_band:float=0.1,
+                                        min_dN_pre_screening:float=1e-2,
+                                        threshold_dN_2b_trial_band_center:float=None,
+                                        precision_scf_band_centers:float=1e-5,
                                         err_tolerance_compare_kpts_val:float=1e-8,
                                         collect_scf_data:bool=False,
                                         save_data = {'save2file': False, 
@@ -507,27 +508,60 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
                                                      'fname_suffix': ''}):
         """
         Find band centers and broadening of the unfolded band structure.
+        
+        The implementation is based on the SCF algorithm of automatic band center 
+        determination from the following references:
+        1. Medeiros et al, PRB 89, 041407(R) (2014) 
+        2. Mondal et al, TBA
+        
+        Original implementation: 
+            https://github.com/band-unfolding/bandup/utils/post_unfolding/
+            locate_band_centers_and_estimate_broadening/find_band_centers_and_broadenings.py
 
         Parameters
         ----------
         unfolded_bandstructure : numpy array
             Unfolded effective band structure. 
-            Format: [k index, k on path (A^-1), energy, weight, "Sx, Sy, Sz" if spinor]
-        min_dN_pre_screening : float, optional
-            Discard the bands which has weights below min_dN_pre_screening to start with. 
-            This pre-screening step helps to minimize the data that will processed
-            now on. The default is 1e-4. [* critical parameter]
-        threshold_dN_2b_trial_band_center : float, optional
-            Initial guess of the band centers based on the threshold wights. 
-            The default is 0.05. [* critical parameter]
+            Format: [k index, k on path (A^-1), energy (eV), weight, "Sx, Sy, Sz" if spinor]
+        algorithm_version : str, optional
+            Algorithm to determine band centers and broadening. 
+            Options are: 'Medeiros2014','Mondal2025'
+            The default is 'Mondal2025'.
+            Note: 
+            1. Medeiros2014 algorithm uses dN as weights during band center determination.
+            o average_bandcenter = average(energies, weights=dN)
+            2. Mondal2025 version additionally uses distance weights (Gaussian decay 
+            around average reference band center).
+            o distace_2_ref = average(energies, weights=dN)
+            o weights_distance = exp(-(distace_2_ref**2)/(2*sigma**2))
+            o average_bandcenter = average(energies, weights=dN*weights_distance) 
+        sigma : float, optional
+            Standard deviation of Gaussian decay for the weights during average band center
+            determination. The decay is based on energy axis. The default is 1.
+            Note: This parameter is used in 'Mondal2025' algorithm_version. 
+            o distace_2_ref = average(energies, weights=dN)
+            o weights_distance = exp(-(distace_2_ref**2)/(2*sigma**2))
+            o average_bandcenter = average(energies, weights=dN*weights_distance)
         min_sum_dNs_for_a_band : float, optional
             Cut off criteria for minimum weights that a band center should have. 
             The band centers with lower weights than min_sum_dNs_for_a_band will be
             discarded during SCF refinements. If min_sum_dNs_for_a_band  
             is smaller than threshold_dN_2b_trial_band_center, min_sum_dNs_for_a_band
             will be reset to threshold_dN_2b_trial_band_center value.
-            The default is 0.05. [* critical parameter]
-        precision_pos_band_centers : float, optional
+            The default is 1e-1. 
+            Note: In most of the cases the default value is good enough.
+        min_dN_pre_screening : float, optional
+            Discard the bands which has weights below min_dN_pre_screening to start with. 
+            This pre-screening step helps to minimize the data that will processed
+            now on. The default is 1e-2. 
+            Note: For 'Mondal2025' algorithm_version this value is not a critical parameter. 
+            Adjust the default value only for fine tuning when needed.
+        threshold_dN_2b_trial_band_center : float, optional
+            Initial guess of the band centers based on the threshold wights. If None,
+            all the band centers are used as the initial guess. The default is None. 
+            Note: For 'Mondal2025' algorithm_version this is not a critical parameter. 
+            Adjust the default value only for fine tuning when needed.
+        precision_scf_band_centers : float, optional
             Precision when compared band centers from previous and current SCF
             iteration. SCF is considered converged if this precision is reached.
             The default is 1e-5. [not critical parameter]
@@ -565,10 +599,12 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
 
         """
         _BandCentersBroadening.__init__(self, unfolded_bandstructure=unfolded_bandstructure, 
+                                        algorithm_version=algorithm_version,
+                                        sigma=sigma,
+                                        min_sum_dNs_for_a_band=min_sum_dNs_for_a_band,
                                         min_dN_pre_screening=min_dN_pre_screening,
                                         threshold_dN_2b_trial_band_center=threshold_dN_2b_trial_band_center,
-                                        min_sum_dNs_for_a_band=min_sum_dNs_for_a_band, 
-                                        precision_pos_band_centers=precision_pos_band_centers,
+                                        precision_scf_band_centers=precision_scf_band_centers,
                                         err_tolerance_compare_kpts_val=err_tolerance_compare_kpts_val,
                                         print_log=self.print_log_info)
         return self._scfs_band_centers_broadening(collect_data_scf=collect_scf_data,
@@ -640,8 +676,8 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
 
         Returns
         -------
-        m_star : float
-            Calculated effective mass and error in m_0 unit.
+        m_star : (float, float)
+            Calculated effective mass (m_star[0]) and error (m_star[1]) in m_0 unit.
         popt : array
             Optimal values for the parameters so that the sum of the squared
             residuals of ``f(xdata, *popt) - ydata`` is minimized.
@@ -664,7 +700,6 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
             if covariance of the parameters can not be estimated.
              
         """
-        space_gap = 55 # add white space for text line formatting
         if (parabolic_dispersion or hyperbolic_dispersion_positive or 
             hyperbolic_dispersion_negative):
             pass
@@ -672,7 +707,6 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
             raise ValueError('No dispersion option is supplied for fitting.')
             
         _EffectiveMass.__init__(self, print_log=self.print_log_info)
-        text_params_ = ','.join(params_name)
 
         ## parameters: ['alpha', 'kshift', 'cbm', 'gamma']
         if initial_guess_params is None: 
@@ -702,7 +736,7 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
             params_bounds = tuple(xx[:-1] for xx in params_bounds)
 
         if self.print_log_info is not None:
-            log_txt_ = f'-- Effective mass calculator::\n{"--- Band dispersion":<{space_gap}}: '
+            log_txt_ = f'-- Effective mass calculator::\n{"--- Band dispersion":<{self.space_gap}}: '
             if parabolic_dispersion:
                 log_txt_ += 'Parabolic'
             elif hyperbolic_dispersion_positive:
@@ -712,9 +746,9 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
             print(log_txt_)
             
             if self.print_log_info == 'high':
-                print(f'{"--- Parameters":<{space_gap}}: {params_name}')
-                print(f'{"--- Initial guesses for the parameters":<{space_gap}}: {initial_guess_params}')
-                print(f'{"--- Upper and lower bounds for the parameters":<{space_gap}}: {params_bounds}')
+                print(f'{"--- Parameters":<{self.space_gap}}: {params_name}')
+                print(f'{"--- Initial guesses for the parameters":<{self.space_gap}}: {initial_guess_params}')
+                print(f'{"--- Upper and lower bounds for the parameters":<{self.space_gap}}: {params_bounds}')
             
         m_star, popt, pcov, params_errors = self._effective_mass_calculator(kpath, band_energy, 
                                                                             ignore_kshift_cbm_fit=ignore_kshift_cbm_fit,
@@ -725,18 +759,18 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
                                                                             fit_hyperbola_negative=hyperbolic_dispersion_negative)
         if self.print_log_info is not None:
             if self.print_log_info in ['medium', 'high']:
-                print(f"{'--- Optimized parameters':<{space_gap}}: {popt}")
-                print(f"{'--- One standard deviation errors on the parameters':<{space_gap}}: {params_errors}")
-            print_text_ = f"{'--- Results':<{space_gap}}: effective mass (m*) = {m_star[0]:.4f} +/- {m_star[1]:.4f} m_0"
+                print(f"{'--- Optimized parameters':<{self.space_gap}}: {popt}")
+                print(f"{'--- One standard deviation errors on the parameters':<{self.space_gap}}: {params_errors}")
+            print_text_ = f"{'--- Results':<{self.space_gap}}: effective mass (m*) = {m_star[0]:.4f} +/- {m_star[1]:.4f} m_0"
             if (not parabolic_dispersion) and (hyperbolic_dispersion_positive or hyperbolic_dispersion_negative):
-                print_text_ += f'\n{" ":<{space_gap}}: nonparabolicity parameter (gamma) = {popt[-1]:.2f} +/- {params_errors[-1]:.2f} ev^-1'
+                print_text_ += f'\n{" ":<{self.space_gap}}: nonparabolicity parameter (gamma) = {popt[-1]:.2f} +/- {params_errors[-1]:.2f} ev^-1'
             print(print_text_,'\n')
         return m_star, popt, pcov, params_errors
     
-    def fit_functions(self, kpath, optimized_parameters, 
-                      parabolic_dispersion:bool=False, 
-                      hyperbolic_dispersion_positive:bool=False, 
-                      hyperbolic_dispersion_negative:bool=False):
+    def effective_mass_fit_functions(self, kpath, optimized_parameters, 
+                                     parabolic_dispersion:bool=False,
+                                     hyperbolic_dispersion_positive:bool=False, 
+                                     hyperbolic_dispersion_negative:bool=False):
         """
         Fit band dispersion functions using the optimized parameters.
         
@@ -767,8 +801,7 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
              
         """
         if self.print_log_info is not None:
-            space_gap = 55
-            log_txt_ = f'{"-- Band dispersion type in fit functions":<{space_gap}}: '
+            log_txt_ = f'{"-- Band dispersion type in fit functions":<{self.space_gap}}: '
             if parabolic_dispersion:
                 log_txt_ += 'Parabolic'
             elif hyperbolic_dispersion_positive:
@@ -791,6 +824,118 @@ class Properties(_BandCentersBroadening, _EffectiveMass):
             return _EffectiveMass._fit_hyperbola_negative(kpath, *optimized_parameters)
         else:
             raise ValueError('No dispersion option is supplied for fitting.')
+            
+    def calculate_alloy_scattering_potential(self, m_star, unit_cell_volm, composition,
+                                             band_energy, band_width,
+                                             intial_guess_u0=1, fitting_bounds_u0=(0,2),
+                                             non_parabolocity_param_m_star=0):
+        """
+        This function calculates the alloy-disordered scattering lifetime
+        using a fitted statistically averaged disorder potential in the matrix element for
+        Fermi's golden rule. This analytical equation is fitted to the band broadening/width
+        from first-principles band structure.
+        
+        o Analytical equation for scattering:
+        1/tau = 2*pi/hbar * U0^2 *x(1-x) * Omega0 * m*^(3/2)/sqrt(2)/pi^2/hbar^3 * 
+                (1+2*gamma*E) * sqrt(E(1+gamma*E)) * (1+2*gamma*E+(4/3)*gamma^2*E^2) / (1+2*gamma*E)^2
+                
+        o From first-principles band structure:
+        Within the extended Ehrenreich and Schwartz theory, the alloy-disorder scattering
+        rate is given by:
+        1/tau = band_broadening / hbar
+                
+        The implementation is based on Reference: 
+            1. Pant et. al., APL, 117, 242105 (2020)
+            2. Mondal et al, TBA 
+
+        Parameters
+        ----------
+        m_star : float 
+            Carrier effective mass (in m0 unit). E.g. 0.2
+        unit_cell_volm : float
+            Primitive cell volume (in Angstrom^3).
+        composition : float
+            Alloy mole fraction (0 <= composition <= 1).
+        band_energy : float array
+            Band energies (eV) to fit for scattering lifetime equation.
+        band_width : float array
+            Band width/broadening (eV) to fit for scattering lifetime equation..
+        intial_guess_u0 : float, optional
+            Intial guess for fitting parameter - scattering potential, U0. The default is 1.
+        fitting_bounds_u0 : tuple, optional
+            Fitting bounds for fitting parameter - scattering potential, U0. The default is (0,2).
+        non_parabolocity_param_m_star : float, optional
+            hyperbolicity parameter / non-parabolic parameter, gamma, (eV^-1) 
+            in Kane model for nonparabolic spherical bands:
+            E (1 + gamma*E) = hbar^2 k^2/(2m*)
+            The default is 0.
+
+        Returns
+        -------
+        Tuple (float, float)
+            Fitted parameter, U0 => (U0 +- U0_std_error) in eV
+            One standard deviation errors on the parameters (eV): 
+            U0_std_error = np.sqrt(np.diag(pcov))
+        pcov : 2D array
+            The estimated approximate covariance of popt.
+
+        """
+        _alloy_scattering_params.__init__(self, m_star, unit_cell_volm, composition,
+                                          non_parabolocity_param=non_parabolocity_param_m_star)
+        popt, pcov, perr =  self._calculate_alloy_scattering_potential(band_energy, band_width,
+                                                                       intial_guess_u0=intial_guess_u0,
+                                                                       fitting_bounds_u0=fitting_bounds_u0)
+        
+        if self.print_log_info is not None:
+            print('-- Alloy scattering potential calculator::')
+            if self.print_log_info in ['medium', 'high']:
+                print(f"{'--- Optimized parameters':<{self.space_gap}}: {popt}")
+                print(f"{'--- One standard deviation errors on the parameters':<{self.space_gap}}: {perr}")
+            print_text_ = f"{'--- Results':<{self.space_gap}}: scattering potential = {popt[0]:.4f} +/- {perr[0]:.4f} eV"
+            print(print_text_,'\n')
+        return (popt[0], perr[0]), pcov
+    
+    def alloy_scattering_lifetime_function(self, energy, m_star, unit_cell_volm, composition,
+                                           scattering_potential, non_parabolocity_param_m_star=0):
+        """
+        This function calculates the alloy-disordered scattering lifetime, 1/tau,
+        using a statistically averaged disorder potential in the matrix element for
+        Fermi's golden rule.         
+        
+        hbar/tau = 2*pi * U0^2 *x(1-x) * Omega0 * m*^(3/2)/sqrt(2)/pi^2/hbar^3 * 
+                (1+2*gamma*E) * sqrt(E(1+gamma*E)) * (1+2*gamma*E+(4/3)*gamma^2*E^2) / (1+2*gamma*E)^2
+                
+        Reference: 
+            1. Pant et. al., APL, 117, 242105 (2020)
+            2. Mondal et al, TBA 
+
+        Parameters
+        ----------            
+        energy : float array
+            Band energies (eV).
+        m_star : float 
+            Carrier effective mass (in m0 unit). E.g. 0.2
+        unit_cell_volm : float
+            Primitive cell volume (in Angstrom^3).
+        composition : float
+            Alloy mole fraction (0 <= composition <= 1).
+        scattering_potential : float
+            Alloy-disordered scattering potential (eV).
+        non_parabolocity_param_m_star : float, optional
+            hyperbolicity parameter / non-parabolic parameter, gamma, (eV^-1) 
+            in Kane model for nonparabolic spherical bands:
+            E (1 + gamma*E) = hbar^2 k^2/(2m*)
+            The default is 0.    
+
+        Returns
+        -------
+        1D array of floats
+            Alloy-disordered scattering lifetime, hbar/tau (eV).
+
+        """
+        _alloy_scattering_params.__init__(self, m_star, unit_cell_volm, composition,
+                                          non_parabolocity_param=non_parabolocity_param_m_star)
+        return self._Fermi_rule_fit(energy, scattering_potential)
                 
 class SaveBandStructuredata:
     """
@@ -838,7 +983,7 @@ class SaveBandStructuredata:
         ----------
         unfolded_bandstructure : numpy ndarray
             Unfolded effective band structure.
-            Format: [k index, k on path (A^-1), energy, weight, "Sx, Sy, Sz" if spinor]
+            Format: [k index, k on path (A^-1), energy (eV), weight, "Sx, Sy, Sz" if spinor]
         save_dir : str or path, optional
             Directory path where to save the file. The default is current directory.
         file_name : str, optional
@@ -873,7 +1018,7 @@ class SaveBandStructuredata:
         ----------
         unfolded_bandceneter : numpy ndarray
             Band cenetrs data.
-            Format: [kpoint index, kpoint coordinate, Band center, Band width, Sum of dN]
+            Format: [k index, k on path (A^-1), Band center (eV), Band width (eV), Sum of dN]
         save_dir : str or path, optional
             Directory path where to save the file. The default is current directory.
         file_name : str, optional
@@ -915,8 +1060,8 @@ class Plotting(_EBSplot):
                  Ef=None, Emin=None, Emax=None, pad_energy_scale:float=0.5, 
                  threshold_weight:float=None, mode:str="fatband", 
                  yaxis_label:str='E (eV)', special_kpoints:dict=None, plotSC:bool=True,  
-                 marker='o', fatfactor=20, nE:int=100, smear:float=0.05,
-                 color='gray', color_map='viridis', show_legend:bool=True,
+                 marker='o', sc_marker='o', fatfactor=20, nE:int=100, smear:float=0.05,
+                 color='gray', sc_color='gray', color_map='viridis', show_legend:bool=True,
                  plot_colormap_bandcenter:bool=True, show_colorbar:bool=False,
                  colorbar_label:str=None, vmin=None, vmax=None, 
                  show_plot:bool=True, savefig:bool=True, **kwargs_savefig):
@@ -929,7 +1074,7 @@ class Plotting(_EBSplot):
             k on path (in A^-1) coordinate.
         unfolded_bandstructure : ndarray
             Unfolded effective band structure/band center data. 
-            Format: [k index, k on path (A^-1), energy, weight, "Sx, Sy, Sz" if spinor] or
+            Format: [k index, k on path (A^-1), energy (eV), weight, "Sx, Sy, Sz" if spinor] or
             Format: [k index, kpoint coordinate, Band center, Band width, Sum of dN] for band centers
         fig : matplotlib.pyplot figure instance, optional
             Figure instance to plot on. The default is None.
@@ -966,6 +1111,10 @@ class Plotting(_EBSplot):
             The marker style. Marker can be either an instance of the class or 
             the text shorthand for a particular marker. 
             The default is 'o'.
+        sc_marker : matplotlib.pyplot markerMarkerStyle, optional
+            The marker style for supercell plots. Marker can be either an 
+            instance of the class or the text shorthand for a particular marker. 
+            The default is 'o'.
         fatfactor : int, optional
             Scatter plot marker size. The default is 20.
         nE : int, optional
@@ -974,8 +1123,9 @@ class Plotting(_EBSplot):
         smear : float, optional
             Gaussian smearing. The default is 0.05.
         color : str/color, optional
-            Color of plot of unfolded band structure. The color of supercell
-            band structures is gray. The default is 'gray'.
+            Color of plot of unfolded band structure. The default is 'gray'.
+        sc_color : str/color, optional
+            Color of plot of folded supercell band structure.The default is 'gray'.
         color_map: str/ matplotlib colormap
             Colormap for density plot. The default is viridis.
         show_legend : bool
@@ -1017,8 +1167,9 @@ class Plotting(_EBSplot):
                           Emin=Emin, Emax=Emax, pad_energy_scale=pad_energy_scale, 
                           threshold_weight=threshold_weight, mode=mode,
                           yaxis_label=yaxis_label, special_kpoints=special_kpoints, 
-                          plotSC=plotSC, marker=marker, fatfactor=fatfactor, nE=nE, 
-                          smear=smear, color=color, color_map=color_map,
+                          plotSC=plotSC, marker=marker, sc_marker=sc_marker, 
+                          fatfactor=fatfactor, nE=nE, smear=smear, 
+                          color=color, sc_color=sc_color, color_map=color_map,
                           plot_colormap_bandcenter=plot_colormap_bandcenter,
                           show_legend=show_legend, show_colorbar=show_colorbar,
                           colorbar_label=colorbar_label, vmin=vmin, vmax=vmax, 
@@ -1044,7 +1195,7 @@ class Plotting(_EBSplot):
             k on path (in A^-1) coordinate. 
         unfolded_bandstructure : ndarray
             Unfolded effective band structure data. 
-            Format: [k on path (A^-1), energy, weight, "Sx, Sy, Sz" if spinor]
+            Format: [k on path (A^-1), energy (eV), weight, "Sx, Sy, Sz" if spinor]
         al_scf_data : dictionary
             All SCF data.
             Each array contains the final details of band centers in a particular
