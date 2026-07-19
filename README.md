@@ -134,7 +134,7 @@ If you use `BandUPpy` in your work, please:
 
   * **How to cite the package:** (use appropriate version number and doi corresponding to your installed banduppy)
 
->> 1. Badal Mondal, Stepan S. Tsirkin, "band-unfolding/banduppy: version-1.0.0 (v1.0.0)". Zenodo, 2026. [doi:10.5281/zenodo.21417715](https://doi.org/10.5281/zenodo.21417715)
+>> 1. Badal Mondal, Stepan S. Tsirkin, "band-unfolding/banduppy: version-1.0.0 (v1.0.0)". Zenodo, 2026. [doi:10.5281/zenodo.21417714](https://doi.org/10.5281/zenodo.21417714)
 >> 2. Mikel Iraola, Juan L. Mañes, Barry Bradlyn, Titus Neupert, Maia G. Vergniory, Stepan S. Tsirkin, "IrRep: Symmetry eigenvalues and irreducible representations of ab initio band structures", [Comput. Phys. Commun. **272**, 108226 (2022)](https://doi.org/10.1016/j.cpc.2021.108226)
 
   * **Read and cite the following papers** (and the appropriate references therein):
@@ -182,8 +182,10 @@ GNU General Public License for more details: [GNU General Public License v3.0](h
 
 <!-- =========================================================== -->
 ## Upcoming (TBD)
-1. Inverse participation ratio implementation
-2. Orbital contribution projection implementation
-3. Set up wiki
+1. Function to predict all k's for a given K [Unfold() an existing wavefunction file without prior SC_PC_map file] -> tutorial+tests 
+2. Inverse participation ratio implementation
+3. Orbital contribution projection implementation
+4. Set up wiki
+5. Parallelization of Unfolding routine
 <!-- =========================================================== -->
 
