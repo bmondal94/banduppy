@@ -176,7 +176,7 @@ class _SaveData2File:
             File path where the data is saved.
 
         """
-        if data is None: return
+        if (data is None) or (save_dir is None) or (file_name is None): return
         fname_save_file = f'{save_dir}/{file_name}{file_name_suffix}'
         if isinstance(data, np.ndarray):
             fname_save_file += file_extension

@@ -248,7 +248,8 @@ class HighLevelProperties(Properties):
                                            zero_weight_kp_file, 
                                            save_dir='.', file_name:str='KPOINTS_merged', 
                                            file_name_suffix:str='', 
-                                           file_format:str = 'vasp'):
+                                           file_format:str = 'vasp',
+                                           file_comment_symbol:str=''):
         with open(nonzero_weight_kp_file, 'r') as f:
             lines = []
             for i in range(3): 
@@ -258,10 +259,11 @@ class HighLevelProperties(Properties):
             raise NotImplementedError("Only reciprocal mode Kpoints in IBZKPT file merginf has been implemented so far.")
           
         ibz_kps = np.genfromtxt(nonzero_weight_kp_file, skip_header=3, max_rows=int(lines[1]), comments='#')
-        zero_weight_sc_kps = np.genfromtxt(zero_weight_kp_file, skip_header=3, comments='!')
+        zero_weight_sc_kps = np.genfromtxt(zero_weight_kp_file, skip_header=3, comments='#')
+        zero_weight_sc_kps[:, -1] = 0 # Ensure the k-point weights are zero
         merge_data = np.concatenate((ibz_kps, zero_weight_sc_kps), axis=0)
         
-        header_msg  = f"K-points (IBZKPT plus zero weighted KPOINTS_SC) generated using banduppy-{__version__} package"
+        header_msg  = f"{file_comment_symbol}K-points (IBZKPT plus zero weighted KPOINTS_SC) [banduppy-{__version__}]"
         header_msg += f"\n{len(merge_data)}\nreciprocal"
         _SaveData2File._save_sc_kpts_2_file(data=merge_data,
                                             save_dir=save_dir, file_name=file_name,
@@ -271,3 +273,4 @@ class HighLevelProperties(Properties):
                                             footer_txt='',
                                             print_log=self.print_log_info,
                                             print_msg='Saving merged KPOINT file')
+        return merge_data
